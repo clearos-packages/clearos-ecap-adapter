@@ -3,7 +3,7 @@
 #endif
 
 #include <iostream>
-#include <fstream>
+//#include <fstream>
 #include <map>
 #include <vector>
 #include <string>
@@ -21,6 +21,7 @@
 
 #include <syslog.h>
 #include <expat.h>
+#include <stdio.h>
 
 #include "expat-xml.h"
 
@@ -29,9 +30,28 @@
 class ConfigParser : public ExpatXmlParser
 {
 public:
+    ConfigParser(const std::string &filename);
+
+    virtual void Reset(void);
+    virtual void Parse(const std::string &chunk);
     virtual void ParseElementOpen(ExpatXmlTag *tag);
     virtual void ParseElementClose(ExpatXmlTag *tag);
+
+    FILE *config;
 };
+
+ConfigParser::ConfigParser(const std::string &filename)
+    : ExpatXmlParser()
+{
+    config = fopen(filename.c_str(), "r");
+    if (config == NULL) throw std::runtime_error("Could not open configuration");
+}
+
+void ConfigParser::Reset(void)
+{
+    rewind(config);
+    ExpatXmlParser::Reset();
+}
 
 void ConfigParser::ParseElementOpen(ExpatXmlTag *tag)
 {
@@ -189,6 +209,9 @@ void Adapter::Service::start()
     syslog(LOG_LOCAL0 | LOG_INFO, __PRETTY_FUNCTION__);
     libecap::adapter::Service::start();
 
+    ConfigParser parser(PACKAGE_CONFIG);
+
+#if 0
     std::ifstream config(PACKAGE_CONFIG);
 
     if (config.is_open()) {
@@ -206,6 +229,7 @@ void Adapter::Service::start()
         }
         config.close();
     }
+#endif
 }
 
 void Adapter::Service::stop()
