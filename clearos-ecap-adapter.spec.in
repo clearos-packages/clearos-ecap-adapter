@@ -1,0 +1,48 @@
+# eCap: The Code in the Middle (http://www.e-cap.org/)
+Name: @PACKAGE_TARNAME@
+Version: @PACKAGE_VERSION@
+Release: 1%{dist}
+Vendor: The Measurement Factory
+License: GPL
+Group: System Environment/Libraries
+Packager: ClearFoundation
+Source: %{name}-%{version}.tar.gz
+BuildRoot: /var/tmp/%{name}-%{version}
+Summary: ClearOS eCAP Adapter Library
+Requires(post): /sbin/ldconfig
+Requires(postun): /sbin/ldconfig
+
+%description
+The ClearOS eCAP Adapter can be configured to add custom headers to outbound HTTP requests through Squid.
+
+# Build
+%prep
+%setup -q
+./autogen.sh
+%{configure}
+
+%build
+make %{?_smp_mflags}
+
+# Install
+%install
+make install DESTDIR=$RPM_BUILD_ROOT
+
+# Clean-up
+%clean
+[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
+
+# Post install
+%post
+/sbin/ldconfig
+
+# Post uninstall
+%postun
+/sbin/ldconfig
+
+# Files
+%files
+%defattr(-,root,root)
+%{_libdir}/libclearos-ecap-adapter.so*
+
+# vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
