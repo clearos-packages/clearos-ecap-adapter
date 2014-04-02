@@ -5,11 +5,11 @@
 #
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([ClearOS eCAP Adapter, 1.0, [], [clearos-ecap-adapter])
-AC_CONFIG_AUX_DIR([cfgaux])
-AC_CONFIG_MACRO_DIR([cfgaux])
+AC_INIT([ClearOS eCAP Adapter], [1.0], [], [clearos-ecap-adapter])
+AC_CONFIG_AUX_DIR([m4])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/ecap-adapter.cpp])
-AC_CONFIG_HEADERS(src/autoconf.h)
+AC_CONFIG_HEADERS([src/autoconf.h])
 
 AM_INIT_AUTOMAKE([nostdinc])
 AM_MAINTAINER_MODE

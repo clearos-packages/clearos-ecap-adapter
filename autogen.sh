@@ -34,7 +34,7 @@ then
 		chmod u-w $m
 	fi
 
-	if test -f libtool.m4 -o -f cfgaux/libtool.m4
+	if test -f libtool.m4 -o -f m4/libtool.m4
 	then
 		echo "Warning: libtoolize 1.x does not update libtool.m4."
 		echo ""
