@@ -9,8 +9,6 @@ SUBDIRS	= src
 EXTRA_DIST = \
 	LICENSE \
 	NOTICE \
-	CREDITS \
-	README \
 	autogen.sh
 
 DISTCLEANFILES = \

@@ -4,8 +4,6 @@ clearos-ecap-adapter.spec
 config.log
 config.status
 configure
-COPYING
-INSTALL
 libtool
 m4/config.guess
 m4/config.sub
