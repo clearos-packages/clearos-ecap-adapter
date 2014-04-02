@@ -27,6 +27,8 @@ make %{?_smp_mflags}
 # Install
 %install
 make install DESTDIR=$RPM_BUILD_ROOT
+rm -f $RPM_BUILD_ROOT/%{_libdir}/*.a
+rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
 
 # Clean-up
 %clean
