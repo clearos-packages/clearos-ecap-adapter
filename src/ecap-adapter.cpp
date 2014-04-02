@@ -5,6 +5,10 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <vector>
+#include <string>
+#include <stdexcept>
+
 #include <libecap/common/registry.h>
 #include <libecap/common/errors.h>
 #include <libecap/common/message.h>
@@ -16,8 +20,41 @@
 #include <libecap/host/xaction.h>
 
 #include <syslog.h>
+#include <expat.h>
+
+#include "expat-xml.h"
 
 #define PACKAGE_CONFIG  "/etc/" PACKAGE_TARNAME ".conf"
+
+class ConfigParser : public ExpatXmlParser
+{
+public:
+    virtual void ParseElementOpen(ExpatXmlTag *tag);
+    virtual void ParseElementClose(ExpatXmlTag *tag);
+};
+
+void ConfigParser::ParseElementOpen(ExpatXmlTag *tag)
+{
+}
+
+void ConfigParser::ParseElementClose(ExpatXmlTag *tag)
+{
+}
+
+class TitleParser : public ExpatXmlParser
+{
+public:
+    virtual void ParseElementOpen(ExpatXmlTag *tag);
+    virtual void ParseElementClose(ExpatXmlTag *tag);
+};
+
+void TitleParser::ParseElementOpen(ExpatXmlTag *tag)
+{
+}
+
+void TitleParser::ParseElementClose(ExpatXmlTag *tag)
+{
+}
 
 namespace std
 {

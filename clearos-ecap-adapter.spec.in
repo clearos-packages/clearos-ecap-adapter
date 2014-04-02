@@ -9,6 +9,7 @@ Packager: ClearFoundation
 Source: %{name}-%{version}.tar.gz
 BuildRoot: /var/tmp/%{name}-%{version}
 Summary: ClearOS eCAP Adapter Library
+BuildRequires: expat-devel
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 

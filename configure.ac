@@ -28,9 +28,10 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
 # Checks for libraries.
+AC_CHECK_LIB([expat], [XML_ParserCreate],
+    [LIBS="-lexpat $LIBS"],
+    [AC_MSG_ERROR([libexpat is not found or unusable.])])
 
-dnl check for libecap
-dnl AX_CXX_CHECK_LIB([ecap], [eCAP::Host::RegisterService(Service * = 0)])
 AC_CHECK_LIB([ecap], [main],
     [LIBS="-lecap $LIBS"],
     [AC_MSG_FAILURE([libecap is not found or unusable])]
