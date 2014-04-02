@@ -16,8 +16,8 @@ AM_MAINTAINER_MODE
 
 LT_INIT
 
-m4_include(cfgaux/xstd_common.ac)
-m4_include(cfgaux/xstd_cpp_checks.ac)
+m4_include(m4/xstd_common.ac)
+m4_include(m4/xstd_cpp_checks.ac)
 
 # Checks for programs.
 AC_PROG_CXX

@@ -1,8 +1,8 @@
 ## Process this file with automake to produce Makefile.in
 
-AUTOMAKE_OPTIONS = 1.5
+AUTOMAKE_OPTIONS = 1.5 foreign
 
-ACLOCAL_AMFLAGS = -I cfgaux
+ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS	= src
 
