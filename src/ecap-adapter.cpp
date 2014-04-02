@@ -3,6 +3,7 @@
 #endif
 
 #include <iostream>
+#include <map>
 #include <libecap/common/registry.h>
 #include <libecap/common/errors.h>
 #include <libecap/common/message.h>
@@ -12,6 +13,11 @@
 #include <libecap/adapter/service.h>
 #include <libecap/adapter/xaction.h>
 #include <libecap/host/xaction.h>
+
+namespace std
+{
+    typedef map<string, string> HeaderMap;
+}
 
 // Not required, but adds clarity
 namespace Adapter
@@ -40,12 +46,17 @@ class Service: public libecap::adapter::Service
 
         // Work
         virtual libecap::adapter::Xaction *makeXaction(libecap::host::Xaction *hostx);
+
+    protected:
+        std::string config_file; // Adapter configuration file
+
+        std::HeaderMap headers; // Custom headers map
 };
 
 class Xaction: public libecap::adapter::Xaction
 {
     public:
-        Xaction(libecap::host::Xaction *x);
+        Xaction(libecap::host::Xaction *x, const std::HeaderMap &headers);
         virtual ~Xaction();
 
         // lifecycle
@@ -79,6 +90,8 @@ class Xaction: public libecap::adapter::Xaction
 
         std::string buffer; // for content adaptation
 
+        const std::HeaderMap headers;
+
         typedef enum
         {
             opUndecided,
@@ -110,12 +123,13 @@ void Adapter::Service::describe(std::ostream &os) const
 
 void Adapter::Service::configure(const Config &config)
 {
-    // this service is not configurable
+    Adapter::Service::headers["X-YouTube-Edu-Filter"] = "ksTHbbeJ8etQSakQaIJB_Q";
 }
 
 void Adapter::Service::reconfigure(const Config &config)
 {
-    // this service is not configurable
+    Adapter::Service::headers.clear();
+    configure(config);
 }
 
 void Adapter::Service::start()
@@ -143,12 +157,11 @@ bool Adapter::Service::wantsUrl(const char *url) const
 
 libecap::adapter::Xaction *Adapter::Service::makeXaction(libecap::host::Xaction *hostx)
 {
-    return new Adapter::Xaction(hostx);
+    return new Adapter::Xaction(hostx, headers);
 }
 
-
-Adapter::Xaction::Xaction(libecap::host::Xaction *x): hostx(x),
-    receivingVb(opUndecided), sendingAb(opUndecided) { }
+Adapter::Xaction::Xaction(libecap::host::Xaction *x, const std::HeaderMap &headers)
+    : hostx(x), headers(headers), receivingVb(opUndecided), sendingAb(opUndecided) { }
 
 Adapter::Xaction::~Xaction()
 {
@@ -169,20 +182,20 @@ void Adapter::Xaction::start()
         receivingVb = opNever;
     }
 
-    /* adapt message header */
-
+    // adapt message header
     libecap::shared_ptr<libecap::Message> adapted = hostx->virgin().clone();
     Must(adapted != 0);
 
     // delete ContentLength header because we may change the length
     // unknown length may have performance implications for the host
-    adapted->header().removeAny(libecap::headerContentLength);
+    // adapted->header().removeAny(libecap::headerContentLength);
 
-    // add a custom header
-    static const libecap::Name name("X-Ecap");
-    const libecap::Header::Value value =
-        libecap::Area::FromTempString(libecap::MyHost().uri());
-    adapted->header().add(name, value);
+    // add custom header(s)
+    for (std::HeaderMap::const_iterator i = headers.begin(); i != headers.end(); i++) {
+        const libecap::Name name(i->first);
+        const libecap::Header::Value value = libecap::Area::FromTempString(i->second);
+        adapted->header().add(name, value);
+    }
 
     if (!adapted->body()) {
         sendingAb = opNever; // there is nothing to send
