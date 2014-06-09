@@ -46,8 +46,14 @@ AC_CHECK_HEADERS([libecap/adapter/service.h])
 
 # Checks for library functions.
 
+# Check word size
+AC_CHECK_SIZEOF([long]) 
+AS_IF([test "$ac_cv_sizeof_long" -eq 8], [OS_LIBDIR="lib64"], [OS_LIBDIR="lib"])
+AC_SUBST([OS_LIBDIR])
+
 AC_CONFIG_FILES([\
         clearos-ecap-adapter.spec \
+        squid_ecap.conf \
         Makefile \
         src/Makefile \
 ])

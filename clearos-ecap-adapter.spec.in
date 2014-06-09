@@ -1,7 +1,7 @@
 # eCap: The Code in the Middle (http://www.e-cap.org/)
 Name: @PACKAGE_TARNAME@
 Version: @PACKAGE_VERSION@
-Release: 6%{dist}
+Release: 7%{dist}
 Vendor: The Measurement Factory
 License: GPL
 Group: System Environment/Libraries
@@ -33,6 +33,8 @@ rm -f $RPM_BUILD_ROOT/%{_libdir}/*.a
 rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
 mkdir -p -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/clearos
 cp clearos-ecap-adapter.conf $RPM_BUILD_ROOT%{_sysconfdir}/clearos/ecap-adapter.conf
+mkdir -p -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/squid
+cp squid_ecap.conf $RPM_BUILD_ROOT%{_sysconfdir}/squid
 
 # Clean-up
 %clean
@@ -51,5 +53,6 @@ cp clearos-ecap-adapter.conf $RPM_BUILD_ROOT%{_sysconfdir}/clearos/ecap-adapter.
 %defattr(-,root,root)
 %{_libdir}/libclearos-ecap-adapter.so*
 %config(noreplace) %attr(0640,root,squid) %{_sysconfdir}/clearos/ecap-adapter.conf
+%{_sysconfdir}/squid/squid_ecap.conf
 
 # vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
