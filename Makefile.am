@@ -9,7 +9,6 @@ SUBDIRS	= src
 EXTRA_DIST = \
 	LICENSE \
 	NOTICE \
-	autogen.sh
+	autogen.sh \
+	clearos-ecap-adapter.conf
 
-DISTCLEANFILES = \
-        _configs.sed

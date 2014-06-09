@@ -1,7 +1,7 @@
 # eCap: The Code in the Middle (http://www.e-cap.org/)
 Name: @PACKAGE_TARNAME@
 Version: @PACKAGE_VERSION@
-Release: 1%{dist}
+Release: 6%{dist}
 Vendor: The Measurement Factory
 License: GPL
 Group: System Environment/Libraries
@@ -10,6 +10,7 @@ Source: %{name}-%{version}.tar.gz
 BuildRoot: /var/tmp/%{name}-%{version}
 Summary: ClearOS eCAP Adapter Library
 BuildRequires: expat-devel
+Requires: squid
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 
@@ -30,6 +31,8 @@ make %{?_smp_mflags}
 make install DESTDIR=$RPM_BUILD_ROOT
 rm -f $RPM_BUILD_ROOT/%{_libdir}/*.a
 rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
+mkdir -p -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/clearos
+cp clearos-ecap-adapter.conf $RPM_BUILD_ROOT%{_sysconfdir}/clearos/ecap-adapter.conf
 
 # Clean-up
 %clean
@@ -47,5 +50,6 @@ rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
 %files
 %defattr(-,root,root)
 %{_libdir}/libclearos-ecap-adapter.so*
+%config(noreplace) %attr(0640,root,squid) %{_sysconfdir}/clearos/ecap-adapter.conf
 
 # vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

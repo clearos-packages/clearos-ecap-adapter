@@ -3,10 +3,10 @@
 #endif
 
 #include <iostream>
-//#include <fstream>
 #include <map>
 #include <vector>
 #include <string>
+#include <fstream>
 #include <stdexcept>
 
 #include <libecap/common/registry.h>
@@ -25,7 +25,7 @@
 
 #include "expat-xml.h"
 
-#define PACKAGE_CONFIG  "/etc/" PACKAGE_TARNAME ".conf"
+#define PACKAGE_CONFIG  "/etc/clearos/ecap-adapter.conf"
 
 class ConfigParser : public ExpatXmlParser
 {
@@ -33,33 +33,13 @@ public:
     ConfigParser(const std::string &filename);
 
     virtual void Reset(void);
-    virtual void Parse(const std::string &chunk);
+    virtual void Parse(void);
     virtual void ParseElementOpen(ExpatXmlTag *tag);
     virtual void ParseElementClose(ExpatXmlTag *tag);
 
-    FILE *config;
+protected:
+    std::string filename;
 };
-
-ConfigParser::ConfigParser(const std::string &filename)
-    : ExpatXmlParser()
-{
-    config = fopen(filename.c_str(), "r");
-    if (config == NULL) throw std::runtime_error("Could not open configuration");
-}
-
-void ConfigParser::Reset(void)
-{
-    rewind(config);
-    ExpatXmlParser::Reset();
-}
-
-void ConfigParser::ParseElementOpen(ExpatXmlTag *tag)
-{
-}
-
-void ConfigParser::ParseElementClose(ExpatXmlTag *tag)
-{
-}
 
 class TitleParser : public ExpatXmlParser
 {
@@ -86,7 +66,7 @@ namespace Adapter
 {
 using libecap::size_type;
 
-class Service: public libecap::adapter::Service
+class Service : public libecap::adapter::Service
 {
 public:
     Service();
@@ -99,6 +79,7 @@ public:
     // Configuration
     virtual void configure(const Config &config);
     virtual void reconfigure(const Config &config);
+    void addHeader(std::string &header, std::string &value);
 
     // Lifecycle
     virtual void start(); // expect makeXaction() calls
@@ -117,7 +98,7 @@ protected:
     std::HeaderMap headers; // Custom headers map
 };
 
-class Xaction: public libecap::adapter::Xaction
+class Xaction : public libecap::adapter::Xaction
 {
 public:
     Xaction(libecap::host::Xaction *x, const std::HeaderMap &headers);
@@ -148,6 +129,7 @@ protected:
     void adaptContent(std::string &chunk) const; // converts vb to ab
     void stopVb(); // stops receiving vb (if we are receiving it)
     libecap::host::Xaction *lastHostCall(); // clears hostx
+    void getUri();
 
 private:
     libecap::host::Xaction *hostx; // Host transaction rep
@@ -169,6 +151,67 @@ private:
 };
 
 } // namespace Adapter
+
+ConfigParser::ConfigParser(const std::string &filename)
+    : ExpatXmlParser(), filename(filename) { }
+
+void ConfigParser::Reset(void)
+{
+    ExpatXmlParser::Reset();
+}
+
+void ConfigParser::Parse(void)
+{
+    std::ifstream config(PACKAGE_CONFIG);
+    if (!config.is_open()) throw std::runtime_error("Open error");
+
+    std::string buffer;
+    buffer.reserve(4096);
+
+    do {
+        std::getline(config, buffer);
+        done = config.eof();
+        ExpatXmlParser::Parse(buffer);
+    } while (!done);
+}
+
+void ConfigParser::ParseElementOpen(ExpatXmlTag *tag)
+{
+    syslog(LOG_LOCAL0 | LOG_INFO, "%s: %s",
+        __PRETTY_FUNCTION__, tag->GetName().c_str());
+
+    //Adapter::Service *service = static_cast<Adapter::Service *>(priv_data);
+
+    if ((*tag) == "header") {
+        if (!stack.size() || (*stack.back()) != "clearos-ecap-adapter")
+            ParseError("unexpected tag: " + tag->GetName());
+        if (!tag->ParamExists("name"))
+            ParseError("parameter missing: " + tag->GetName());
+
+        std::string *name = new std::string(tag->GetParamValue("name"));
+        tag->SetData(static_cast<void *>(name));
+    }
+}
+
+void ConfigParser::ParseElementClose(ExpatXmlTag *tag)
+{
+    syslog(LOG_LOCAL0 | LOG_INFO, "%s: %s",
+        __PRETTY_FUNCTION__, tag->GetName().c_str());
+
+    std::string value = tag->GetText();
+    Adapter::Service *service = static_cast<Adapter::Service *>(priv_data);
+
+    if ((*tag) == "header") {
+        if (!stack.size() || (*stack.back()) != "clearos-ecap-adapter")
+            ParseError("unexpected tag: " + tag->GetName());
+        if (!value.size())
+            ParseError("missing value for tag: " + tag->GetName());
+
+        std::string *name = static_cast<std::string *>(tag->GetData());
+        service->addHeader(*name, value);
+        delete name;
+    }
+}
 
 Adapter::Service::Service()
 {
@@ -204,12 +247,30 @@ void Adapter::Service::reconfigure(const Config &config)
     syslog(LOG_LOCAL0 | LOG_INFO, __PRETTY_FUNCTION__);
 }
 
+void Adapter::Service::addHeader(std::string &header, std::string &value)
+{
+    syslog(LOG_LOCAL0 | LOG_INFO, "%s: %s: %s",
+        __PRETTY_FUNCTION__, header.c_str(), value.c_str());
+
+    headers[header] = value;
+}
+
 void Adapter::Service::start()
 {
     syslog(LOG_LOCAL0 | LOG_INFO, __PRETTY_FUNCTION__);
     libecap::adapter::Service::start();
 
-    ConfigParser parser(PACKAGE_CONFIG);
+    try {
+        ConfigParser parser(PACKAGE_CONFIG);
+        parser.SetPrivateData(static_cast<void *>(this));
+        parser.Parse();
+    } catch (ExpatXmlParseException &e) {
+        syslog(LOG_LOCAL0 | LOG_INFO,
+            "%s: %s: Parse error: %s", __PRETTY_FUNCTION__, PACKAGE_CONFIG, e.what());
+    } catch (std::runtime_error &e) {
+        syslog(LOG_LOCAL0 | LOG_INFO,
+            "%s: %s", __PRETTY_FUNCTION__, e.what());
+    }
 
 #if 0
     std::ifstream config(PACKAGE_CONFIG);
@@ -276,13 +337,29 @@ Adapter::Xaction::~Xaction()
 void Adapter::Xaction::start()
 {
     syslog(LOG_LOCAL0 | LOG_INFO, __PRETTY_FUNCTION__);
+
+    getUri();
+
     Must(hostx);
+
     if (hostx->virgin().body()) {
         receivingVb = opOn;
         hostx->vbMake(); // ask host to supply virgin body
     } else {
         // we are not interested in vb if there is not one
         receivingVb = opNever;
+    }
+
+    std::string content_type("application/octect-stream");
+    const libecap::Name content_type_header("Content-Type");
+    const libecap::Header &header = hostx->virgin().header();
+    if (!header.hasAny(content_type_header))
+        syslog(LOG_LOCAL0 | LOG_INFO, "%s: No content type", __PRETTY_FUNCTION__);
+    else {
+        const libecap::Area type = header.value(content_type_header);
+        content_type = std::string(type.start, type.size);
+        syslog(LOG_LOCAL0 | LOG_INFO, "%s: Content type: %s",
+            __PRETTY_FUNCTION__, content_type.c_str());
     }
 
     // adapt message header
@@ -430,6 +507,27 @@ libecap::host::Xaction *Adapter::Xaction::lastHostCall()
     Must(x);
     hostx = 0;
     return x;
+}
+
+void Adapter::Xaction::getUri()
+{
+    syslog(LOG_LOCAL0 | LOG_INFO, __PRETTY_FUNCTION__);
+
+    if (!hostx)
+        return;
+
+    libecap::Area uri_area;
+    typedef const libecap::RequestLine *CLRLP;
+    if (CLRLP requestLine = dynamic_cast<CLRLP>(&hostx->virgin().firstLine()))
+        uri_area = requestLine->uri();
+    else
+    if (CLRLP requestLine = dynamic_cast<CLRLP>(&hostx->cause().firstLine()))
+        uri_area = requestLine->uri();
+
+    std::string uri;
+    uri = std::string(uri_area.start, uri_area.size);
+
+    syslog(LOG_LOCAL0 | LOG_INFO, "%s: request URI: %s", __PRETTY_FUNCTION__, uri.c_str());
 }
 
 // create the adapter and register with libecap to reach the host application

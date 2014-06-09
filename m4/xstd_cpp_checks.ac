@@ -69,7 +69,8 @@ then
 		# replace -O? with -O3
 		CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[0-9]*/-O3/'`;
 		# enable useful warnings
-		CXXFLAGS="$CXXFLAGS -Wall -Wwrite-strings -Woverloaded-virtual"
+		CXXFLAGS="$CXXFLAGS -Wall -Wwrite-strings"
+		#CXXFLAGS="$CXXFLAGS -Wall -Wwrite-strings -Woverloaded-virtual"
 		# avoid disk I/O
 		CXXFLAGS="$CXXFLAGS -pipe"
 

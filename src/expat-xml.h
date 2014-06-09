@@ -33,6 +33,7 @@ public:
     virtual ~ExpatXmlParser();
 
     virtual void Reset(void);
+    void SetPrivateData(void *priv_data) { this->priv_data = priv_data; }
     virtual void Parse(const std::string &chunk);
 
     void ParseError(const std::string &what);
@@ -45,6 +46,9 @@ public:
 
     typedef std::vector<ExpatXmlTag *> TagStack;
     TagStack stack;
+
+protected:
+    void *priv_data;
 };
 
 class ExpatXmlParseException : public std::runtime_error
