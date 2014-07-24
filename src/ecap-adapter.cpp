@@ -77,8 +77,8 @@ public:
     virtual void describe(std::ostream &os) const; // free-format info
 
     // Configuration
-    virtual void configure(const Config &config);
-    virtual void reconfigure(const Config &config);
+    virtual void configure(const libecap::Options &config);
+    virtual void reconfigure(const libecap::Options &config);
     void addHeader(std::string &header, std::string &value);
 
     // Lifecycle
@@ -103,6 +103,10 @@ class Xaction : public libecap::adapter::Xaction
 public:
     Xaction(libecap::host::Xaction *x, const std::HeaderMap &headers);
     virtual ~Xaction();
+
+    // meta-information for the host transaction
+    virtual const libecap::Area option(const libecap::Name &name) const;
+    virtual void visitEachOption(libecap::NamedValueVisitor &visitor) const;
 
     // lifecycle
     virtual void start();
@@ -237,12 +241,12 @@ void Adapter::Service::describe(std::ostream &os) const
         << ": Append custom HTTP headers to requests.";
 }
 
-void Adapter::Service::configure(const Config &config)
+void Adapter::Service::configure(const libecap::Options &config)
 {
     syslog(LOG_LOCAL0 | LOG_DEBUG, __PRETTY_FUNCTION__);
 }
 
-void Adapter::Service::reconfigure(const Config &config)
+void Adapter::Service::reconfigure(const libecap::Options &config)
 {
     syslog(LOG_LOCAL0 | LOG_DEBUG, __PRETTY_FUNCTION__);
 }
@@ -332,6 +336,15 @@ Adapter::Xaction::~Xaction()
         hostx = 0;
         x->adaptationAborted();
     }
+}
+
+const libecap::Area Adapter::Xaction::option(const libecap::Name &) const {
+    syslog(LOG_LOCAL0 | LOG_DEBUG, __PRETTY_FUNCTION__);
+    return libecap::Area();
+}
+
+void Adapter::Xaction::visitEachOption(libecap::NamedValueVisitor &) const {
+    syslog(LOG_LOCAL0 | LOG_DEBUG, __PRETTY_FUNCTION__);
 }
 
 void Adapter::Xaction::start()
@@ -449,7 +462,7 @@ void Adapter::Xaction::noteVbContentDone(bool atEnd)
 {
     syslog(LOG_LOCAL0 | LOG_DEBUG, __PRETTY_FUNCTION__);
     Must(receivingVb == opOn);
-    receivingVb = opComplete;
+    stopVb();
     if (sendingAb == opOn) {
         hostx->noteAbContentDone(atEnd);
         sendingAb = opComplete;
