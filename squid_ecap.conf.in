@@ -6,5 +6,3 @@ ecap_service eReqmod reqmod_precache 0 ecap://clearfoundation.com/ecap-adapter
 
 adaptation_service_set reqFilter eReqmod
 
-adaptation_access reqFilter allow youtube
-
