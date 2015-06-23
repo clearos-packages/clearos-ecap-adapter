@@ -10,5 +10,6 @@ EXTRA_DIST = \
 	LICENSE \
 	NOTICE \
 	autogen.sh \
-	clearos-ecap-adapter.conf
+	clearos-ecap-adapter.conf \
+	clearos-ecap-adapter.spec
 
