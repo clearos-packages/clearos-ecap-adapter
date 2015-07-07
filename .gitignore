@@ -29,3 +29,6 @@ src/Makefile
 src/Makefile.in
 src/*.o
 src/stamp-h1
+/Makefile
+*.src.rpm
+*.tar.gz
