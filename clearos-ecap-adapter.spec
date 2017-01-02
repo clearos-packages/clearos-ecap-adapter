@@ -1,7 +1,7 @@
 # eCap: The Code in the Middle (http://www.e-cap.org/)
 Name: clearos-ecap-adapter
 Version: 2.1
-Release: 1%{dist}
+Release: 2%{dist}
 Vendor: The Measurement Factory
 License: GPL
 Group: System Environment/Libraries
@@ -13,7 +13,7 @@ BuildRequires: autoconf >= 2.63
 BuildRequires: automake
 BuildRequires: libtool
 BuildRequires: expat-devel
-BuildRequires: libecap-devel >= 1.0.0-3
+BuildRequires: libecap-devel >= 1.0.0
 Requires: squid >= 7:3.3.8-11
 Requires: app-web-proxy >= 1:1.6.2-1
 Requires(post): /sbin/ldconfig
