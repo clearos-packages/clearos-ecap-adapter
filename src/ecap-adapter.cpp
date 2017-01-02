@@ -90,7 +90,7 @@ public:
     virtual bool wantsUrl(const char *url) const;
 
     // Work
-    virtual libecap::adapter::Xaction *makeXaction(libecap::host::Xaction *hostx);
+    virtual libecap::adapter::Service::MadeXactionPointer makeXaction(libecap::host::Xaction *hostx);
 
 protected:
     std::string config_file; // Adapter configuration file
@@ -317,10 +317,10 @@ bool Adapter::Service::wantsUrl(const char *url) const
     return true; // no-op is applied to all messages
 }
 
-libecap::adapter::Xaction *Adapter::Service::makeXaction(libecap::host::Xaction *hostx)
+libecap::adapter::Service::MadeXactionPointer Adapter::Service::makeXaction(libecap::host::Xaction *hostx)
 {
     syslog(LOG_LOCAL0 | LOG_DEBUG, __PRETTY_FUNCTION__);
-    return new Adapter::Xaction(hostx, headers);
+    return Adapter::Service::MadeXactionPointer(new Adapter::Xaction(hostx, headers));
 }
 
 Adapter::Xaction::Xaction(libecap::host::Xaction *x, const std::HeaderMap &headers)
@@ -544,6 +544,6 @@ void Adapter::Xaction::getUri()
 }
 
 // create the adapter and register with libecap to reach the host application
-static const bool Registered = (libecap::RegisterService(new Adapter::Service), true);
+static const bool Registered = (libecap::RegisterVersionedService(new Adapter::Service), true);
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
